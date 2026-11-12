@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: DeepSeek Harness on AgentCore Runtime - the agent runtime.
+
+Parameters:
+  AgentName:
+    Type: String
+    Default: dsh_agent
+    AllowedPattern: "^[a-zA-Z][a-zA-Z0-9_]{0,47}$"
+  ContainerUri:
+    Type: String
+    Description: Full ECR image URI including an immutable tag.
+  ExecutionRoleArn:
+    Type: String
+  LlmProvider:
+    Type: String
+    Default: openai-compatible
+    AllowedValues: [openai-compatible, deepseek]
+  LlmBaseUrl:
+    Type: String
+    Default: ""
+    Description: OpenAI-compatible base URL including /v1, e.g. https://llm.example.com/v1
+  LlmModel:
+    Type: String
+    Default: ""
+  LlmApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+  LlmContextWindow:
+    Type: String
+    Default: "128000"
+    Description: The model's real context window in tokens; compaction triggers from it.
+  LlmMaxOutputTokens:
+    Type: String
+    Default: ""
+  LlmReasoningEfforts:
+    Type: String
+    Default: ""
+    Description: 'JSON, e.g. {"off":null,"high":"high"}; empty = non-reasoning model.'
+  LlmCompat:
+    Type: String
+    Default: ""
+    Description: JSON object merged over the default pi-ai compat switches.
+  LlmHeaders:
+    Type: String
+    Default: ""
+    Description: JSON object of extra request headers.
+  LlmSupportsImages:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  DeepSeekApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Only for LlmProvider=deepseek, or to keep web_search on.
+  DeepSeekBaseUrl:
+    Type: String
+    Default: ""
+    Description: Leave empty for the public DeepSeek API.
+  Model:
+    Type: String
+    Default: deepseek-v4-flash
+    Description: Model for LlmProvider=deepseek; ignored otherwise.
+  ReasoningEffort:
+    Type: String
+    Default: ""
+  MaxTokens:
+    Type: String
+    Default: ""
+  Profile:
+    Type: String
+    Default: sdk
+    AllowedValues: [sdk, sdk-minimal]
+  PermissionMode:
+    Type: String
+    Default: danger-full-access
+    AllowedValues: [danger-full-access, workspace-write, read-only]
+  UploadSessionLog:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  IdleRuntimeSessionTimeout:
+    Type: Number
+    Default: 1800
+    MinValue: 60
+    MaxValue: 28800
+  MaxLifetime:
+    Type: Number
+    Default: 28800
+    MinValue: 60
+    MaxValue: 28800
+  MountPath:
+    Type: String
+    Default: /mnt/workspace
+    AllowedPattern: "^/mnt/[a-zA-Z0-9._-]+/?$"
+
+Resources:
+  Runtime:
+    Type: AWS::BedrockAgentCore::Runtime
+    Properties:
+      AgentRuntimeName: !Ref AgentName
+      Description: DeepSeek Harness driven through its Python SDK
+      RoleArn: !Ref ExecutionRoleArn
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: !Ref ContainerUri
+      NetworkConfiguration:
+        NetworkMode: PUBLIC
+      ProtocolConfiguration: HTTP
+      LifecycleConfiguration:
+        IdleRuntimeSessionTimeout: !Ref IdleRuntimeSessionTimeout
+        MaxLifetime: !Ref MaxLifetime
+      FilesystemConfigurations:
+        - SessionStorage:
+            MountPath: !Ref MountPath
+      EnvironmentVariables:
+        LLM_PROVIDER: !Ref LlmProvider
+        LLM_BASE_URL: !Ref LlmBaseUrl
+        LLM_MODEL: !Ref LlmModel
+        LLM_API_KEY: !Ref LlmApiKey
+        LLM_CONTEXT_WINDOW: !Ref LlmContextWindow
+        LLM_MAX_OUTPUT_TOKENS: !Ref LlmMaxOutputTokens
+        LLM_REASONING_EFFORTS: !Ref LlmReasoningEfforts
+        LLM_COMPAT: !Ref LlmCompat
+        LLM_HEADERS: !Ref LlmHeaders
+        LLM_SUPPORTS_IMAGES: !Ref LlmSupportsImages
+        DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
+        DEEPSEEK_BASE_URL: !Ref DeepSeekBaseUrl
+        DSH_MODEL: !Ref Model
+        DSH_REASONING_EFFORT: !Ref ReasoningEffort
+        DSH_MAX_TOKENS: !Ref MaxTokens
+        DSH_PROFILE: !Ref Profile
+        DSH_PERMISSION_MODE: !Ref PermissionMode
+        DSH_UPLOAD_SESSION_LOG: !Ref UploadSessionLog
+        WORKSPACE_MOUNT: !Ref MountPath
+
+Outputs:
+  AgentRuntimeArn:
+    Value: !GetAtt Runtime.AgentRuntimeArn
+  AgentRuntimeId:
+    Value: !GetAtt Runtime.AgentRuntimeId
+  AgentRuntimeVersion:
+    Value: !GetAtt Runtime.AgentRuntimeVersion

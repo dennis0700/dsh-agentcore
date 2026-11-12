@@ -1,0 +1,15 @@
+# Applied on top of the shipped `sdk` profile for unattended AgentCore runs.
+
+# Session-log upload to DeepSeek is off unless DSH_UPLOAD_SESSION_LOG=true.
+- id: session-log-deepseek
+  config:
+    enabled: !!js "process.env.DSH_UPLOAD_SESSION_LOG === 'true'"
+
+# Installing plugins at runtime needs pnpm hard links and a human approver;
+# plugins belong in the image instead.
+- id: tool-plugin-manager
+  disabled: true
+
+# Reminders cannot fire once the microVM is reclaimed.
+- id: tool-schedule
+  disabled: true

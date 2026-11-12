@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+infra/
+scripts/
+tests/
+DESIGN.md
+README.md
+deploy.env
+.last-image
